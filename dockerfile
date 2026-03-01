@@ -1,14 +1,13 @@
-# Use an official Java runtime
-FROM openjdk:17-jdk-alpine
-
-# Set working directory
+# Build stage
+FROM eclipse-temurin:17-jdk-alpine AS build
 WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn clean package -DskipTests
 
-# Copy all project files
-COPY . .
-
-# Build the project (Gradle example)
-RUN mvn clean package --no-daemon
-
-# Run the jar
-CMD ["java", "-jar", "target/demo-1.0.jar"]
+# Run stage
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
