@@ -1,5 +1,5 @@
-# Use the official Eclipse Temurin image for Java 17 on Alpine Linux
-FROM eclipse-temurin:17-jdk-alpine
+# Use Java 21 instead of Java 17
+FROM eclipse-temurin:21-jdk-alpine
 
 # Set working directory
 WORKDIR /app
