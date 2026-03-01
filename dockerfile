@@ -1,4 +1,4 @@
-# Use Java 21 instead of Java 17
+# Use Java 21
 FROM eclipse-temurin:21-jdk-alpine
 
 # Set working directory
@@ -13,5 +13,5 @@ RUN chmod +x ./mvnw
 # Build the project (using Maven wrapper)
 RUN ./mvnw clean package -DskipTests
 
-# Run the jar (using a wildcard to match the built JAR)
-CMD ["java", "-jar", "target/*.jar"]
+# Run the jar with the exact filename from your pom.xml
+CMD ["java", "-jar", "target/demo-0.0.1-SNAPSHOT.jar"]
