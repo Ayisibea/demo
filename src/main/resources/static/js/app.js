@@ -8,7 +8,8 @@
    - GET /availability (NOTE: no /bookings prefix!)
    ============================================ */
 
-const API_BASE = "http://localhost:8080"; // For local testing
+// PRODUCTION VERSION FOR RENDER
+const API_BASE = "https://campus-booking-api.onrender.com";
 
 let selectedSlot = null; // Store the user's selected slot
 let currentFacilityId = null; // Track current facility for bookings
@@ -35,7 +36,10 @@ function setupDatePicker() {
 // ------------------- Load Facilities -------------------
 function loadFacilities() {
     fetch(`${API_BASE}/facilities`)
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+            return res.json();
+        })
         .then(data => {
             const list = document.getElementById("facilityList");
             const facilitySelect = document.getElementById("facilitySelect");
@@ -141,7 +145,7 @@ function generateTimeSlots(start = "08:00", end = "18:00", interval = 30) {
 }
 
 // ------------------- Check Availability -------------------
-// FIXED: Uses GET /availability?facilityId={id}&date={date}&startTime={start}&endTime={end}
+// Uses GET /availability?facilityId={id}&date={date}&startTime={start}&endTime={end}
 function checkAvailability() {
     const facilityId = document.getElementById("facilitySelect").value;
     const date = document.getElementById("bookingDate").value;
@@ -170,10 +174,13 @@ function checkAvailability() {
 
     // Create an array of promises for each time slot
     const availabilityPromises = allSlots.map(slot => {
-        // FIXED: Changed from /bookings/availability to /availability
+        // FIXED: Using /availability (no /bookings prefix)
         const url = `${API_BASE}/availability?facilityId=${facilityId}&date=${date}&startTime=${slot.start}&endTime=${slot.end}`;
         return fetch(url)
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                return res.json();
+            })
             .then(response => ({
                 slot: slot,
                 isAvailable: response.available // The backend returns {available: true/false}
@@ -306,9 +313,12 @@ function createBooking() {
     // Parse the selected slot
     const [startTime, endTime] = selectedSlot.split(" - ");
 
-    // FIXED: Changed from /bookings/availability to /availability
+    // Double-check if this slot is still available using the availability endpoint
     fetch(`${API_BASE}/availability?facilityId=${facilityId}&date=${date}&startTime=${startTime}&endTime=${endTime}`)
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+            return res.json();
+        })
         .then(response => {
             if (!response.available) {
                 showNotification("⛔ This time slot has already been booked by someone else. Please select a different slot.", "error");
