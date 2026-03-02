@@ -5,10 +5,10 @@
    - GET /bookings
    - POST /bookings
    - DELETE /bookings/{id}
-   - GET /bookings/availability
+   - GET /availability (NOTE: no /bookings prefix!)
    ============================================ */
 
-const API_BASE = "";
+const API_BASE = "http://localhost:8080"; // For local testing
 
 let selectedSlot = null; // Store the user's selected slot
 let currentFacilityId = null; // Track current facility for bookings
@@ -141,7 +141,7 @@ function generateTimeSlots(start = "08:00", end = "18:00", interval = 30) {
 }
 
 // ------------------- Check Availability -------------------
-// Uses GET /bookings/availability?facilityId={id}&date={date}&startTime={start}&endTime={end}
+// FIXED: Uses GET /availability?facilityId={id}&date={date}&startTime={start}&endTime={end}
 function checkAvailability() {
     const facilityId = document.getElementById("facilitySelect").value;
     const date = document.getElementById("bookingDate").value;
@@ -170,12 +170,13 @@ function checkAvailability() {
 
     // Create an array of promises for each time slot
     const availabilityPromises = allSlots.map(slot => {
-        const url = `${API_BASE}/bookings/availability?facilityId=${facilityId}&date=${date}&startTime=${slot.start}&endTime=${slot.end}`;
+        // FIXED: Changed from /bookings/availability to /availability
+        const url = `${API_BASE}/availability?facilityId=${facilityId}&date=${date}&startTime=${slot.start}&endTime=${slot.end}`;
         return fetch(url)
             .then(res => res.json())
-            .then(isAvailable => ({
+            .then(response => ({
                 slot: slot,
-                isAvailable: isAvailable
+                isAvailable: response.available // The backend returns {available: true/false}
             }))
             .catch(err => {
                 console.error(`Error checking slot ${slot.display}:`, err);
@@ -305,17 +306,17 @@ function createBooking() {
     // Parse the selected slot
     const [startTime, endTime] = selectedSlot.split(" - ");
 
-    // Double-check if this slot is still available using the availability endpoint
-    fetch(`${API_BASE}/bookings/availability?facilityId=${facilityId}&date=${date}&startTime=${startTime}&endTime=${endTime}`)
+    // FIXED: Changed from /bookings/availability to /availability
+    fetch(`${API_BASE}/availability?facilityId=${facilityId}&date=${date}&startTime=${startTime}&endTime=${endTime}`)
         .then(res => res.json())
-        .then(isAvailable => {
-            if (!isAvailable) {
+        .then(response => {
+            if (!response.available) {
                 showNotification("⛔ This time slot has already been booked by someone else. Please select a different slot.", "error");
                 checkAvailability(); // Refresh the slots
                 return null;
             }
 
-            // Proceed with booking
+            // Proceed with booking - this endpoint remains /bookings (POST)
             return fetch(`${API_BASE}/bookings`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
